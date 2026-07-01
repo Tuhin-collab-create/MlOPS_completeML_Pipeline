@@ -3,6 +3,8 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 import os
 
+import yaml
+
 
 # Logging configuration
 log_dir = "logs"
@@ -27,7 +29,23 @@ if not logger.handlers:
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
     
-
+# Adding params.yaml file to read the parameters
+def load_params(params_path: str):
+    """Loading parameters from a YAML file."""
+    try:
+        with open(params_path,'r') as f:
+            params = yaml.safe_load(f)
+            logger.info(f"Parameters loaded successfully from {params_path}")
+            return params
+    except FileNotFoundError as e:
+        logger.error(f"Parameters file not found: {params_path}: {e}")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"Error parsing YAML file {params_path}: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error loading parameters from {params_path}: {e}")
+        raise
 
 def load_data(file_path: str):
     """Load data from interim subfolder."""
@@ -77,7 +95,8 @@ def save_data(df: pd.DataFrame, file_path: str):
     
 def main():
     try:
-        max_features =500
+        params = load_params("params.yaml")
+        max_features = params['feature_engineering']['max_features']
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         train_path = os.path.join(base_path, "data", "interim", "train_processed.csv")
         test_path = os.path.join(base_path, "data", "interim", "test_processed.csv")

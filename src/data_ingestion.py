@@ -27,6 +27,29 @@ if not logger.handlers:
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
     
+
+# Adding params.yaml file to read the parameters
+
+def load_params(params_path: str):
+    """Load parameters from a YAML file."""
+    try:
+        with open(params_path, 'r') as file:
+            params = yaml.safe_load(file)
+            logger.info(f"Parameters loaded successfully from {params_path}")
+            return params
+    except FileNotFoundError as e:
+        logger.error(f"Parameters file not found: {params_path}: {e}")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"Error parsing YAML file {params_path}: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error loading parameters from {params_path}: {e}")
+        raise
+        
+
+
+
 # Data Loader
 def load_data(data_url:str):
     try:
@@ -67,10 +90,12 @@ def save_data(train_data,test_data,data_path):
     
 def main():
     try:
+        params = load_params('params.yaml')
+        test_size = params['data_ingestion']['test_size']
         data_path = 'https://raw.githubusercontent.com/Tuhin-collab-create/spam_data/main/spam.csv'
         df = load_data(data_url=data_path)
         final_df = preprocess_data(df)
-        train_data,test_data = train_test_split(final_df,test_size=0.20,random_state=2)
+        train_data,test_data = train_test_split(final_df,test_size=test_size,random_state=2)
         save_data(train_data,test_data,data_path='./data')
     except Exception as e:
         logger.error('Failed to complete the data ingestion, %s',e)
